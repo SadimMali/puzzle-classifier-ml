@@ -11,7 +11,9 @@ Opens on http://localhost:5001
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from recommender import recommend
+from datetime import datetime
 import uvicorn
 from classifier import PuzzleClassifier
 import os
@@ -20,6 +22,31 @@ import os
 class ClassifyRequest(BaseModel):
 	fen: str
 	moves: str | None = None
+
+
+class PuzzleContent(BaseModel):
+    id: str
+    themes: list[str]
+    puzzle_type: str | None = None
+    difficulty_rating: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+
+    class Config:
+        extra = "forbid"
+
+
+class HistoryContent(PuzzleContent):
+    lastAttemptAt: datetime | None = None
+
+
+class RecommendRequest(BaseModel):
+    catalog: list[PuzzleContent]
+    history: list[HistoryContent]
+    candidates: list[PuzzleContent]
+    offset: int = Field(default=0, ge=0)
+    limit: int = Field(default=20, ge=1, le=100)
+
+    class Config:
+        extra = "forbid"
 
 
 app = FastAPI(title="Chess Puzzle Classifier Demo")
@@ -88,6 +115,16 @@ async def classify(req: ClassifyRequest):
 	except Exception as e:
 		print(f"[Error] {str(e)}")
 		raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/recommend")
+def recommend_puzzles(req: RecommendRequest):
+    """Internal backend contract: puzzle content in, ranked IDs and explanations out."""
+    return {"items": recommend(
+        [p.model_dump() for p in req.catalog],
+        [p.model_dump(mode="json") for p in req.history],
+        [p.model_dump() for p in req.candidates], req.offset, req.limit,
+    )}
 
 
 @app.get("/examples")
