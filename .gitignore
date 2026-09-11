@@ -70,6 +70,7 @@ logs/
 
 # Test files
 test_*.py
+!test_recommender.py
 beginner_puzzles.csv
 advanced_puzzles.csv
 custom_range_puzzles.csv
