@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: puzzler-classifier
+    env: python
+    plan: starter
+    rootDir: .
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    autoDeploy: true
+    envVars:
+      - key: PUZZLE_CLASSIFIER_MODEL_PATH
+        value: models/puzzle_classifier_model.pkl

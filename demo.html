@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Puzzle Difficulty Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            border-bottom: 3px solid #34495e;
+        }
+        
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1em;
+            font-weight: 400;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #2c3e50;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .button {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-right: 10px;
+        }
+        
+        .button:hover {
+            background: #34495e;
+        }
+        
+        .button:active {
+            background: #1a252f;
+        }
+        
+        .button-secondary {
+            background: #95a5a6;
+        }
+        
+        .button-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .examples {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .examples h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .example-card {
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .example-card:hover {
+            background: #f0f0f0;
+            border-color: #2c3e50;
+        }
+        
+        .example-card h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .example-card p {
+            font-size: 13px;
+            color: #666;
+            font-family: 'Courier New', monospace;
+            margin: 5px 0;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result-very-easy { background: #e8f5e9; border-left: 4px solid #4caf50; }
+        .result-easy { background: #e3f2fd; border-left: 4px solid #2196f3; }
+        .result-medium { background: #fff8e1; border-left: 4px solid #ffc107; }
+        .result-hard { background: #ffebee; border-left: 4px solid #f44336; }
+        .result-extreme { background: #f3e5f5; border-left: 4px solid #9c27b0; }
+        
+        .result h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        
+        .result .rating {
+            font-size: 2em;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .result .info {
+            color: #666;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        
+        .warning {
+            background: #fffde7;
+            border-left: 3px solid #fbc02d;
+            padding: 12px;
+            border-radius: 3px;
+            margin-top: 15px;
+            color: #7c6b00;
+        }
+        
+        .warning strong {
+            color: #7c6b00;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2c3e50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .stat-card .value {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .stat-card .label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .help-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Chess Puzzle Difficulty Classifier</h1>
+            <p>ML-powered rating prediction</p>
+        </div>
+        
+        <div class="content">
+            <!-- Input Form -->
+            <div class="input-section">
+                <h2>Classify Your Puzzle</h2>
+                
+                <div class="form-group">
+                    <label for="fen">Position (FEN) *</label>
+                    <input 
+                        type="text" 
+                        id="fen" 
+                        placeholder="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+                        value="6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - -"
+                    >
+                    <div class="help-text">Starting position in FEN notation</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="moves">Solution Moves (UCI format)</label>
+                    <input 
+                        type="text" 
+                        id="moves" 
+                        placeholder="e2e4 e7e5 g1f3 (space-separated, optional)"
+                        value="e1e8"
+                    >
+                    <div class="help-text">Leave empty for position-only prediction (less accurate)</div>
+                </div>
+                
+                <div>
+                    <button class="button" onclick="classifyPuzzle()">Classify Puzzle</button>
+                    <button class="button button-secondary" onclick="clearForm()">Clear</button>
+                </div>
+            </div>
+            
+            <!-- Loading Spinner -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px;">Analyzing puzzle...</p>
+            </div>
+            
+            <!-- Result -->
+            <div class="result" id="result">
+                <h3 id="result-difficulty"></h3>
+                <div class="rating" id="result-rating"></div>
+                <div class="info" id="result-info"></div>
+                <div class="warning" id="result-warning" style="display: none;">
+                    <strong>Warning:</strong> <span id="warning-text"></span>
+                </div>
+            </div>
+            
+            <!-- Example Puzzles -->
+            <div class="examples">
+                <h3>Example Puzzles</h3>
+                <div id="examples-container">
+                    <!-- Examples will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Model Stats -->
+            <div class="examples" style="margin-top: 30px;">
+                <h3>Model Performance</h3>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="value">±285</div>
+                        <div class="label">Rating Points MAE</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">43,900</div>
+                        <div class="label">Puzzles/Second</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">200K</div>
+                        <div class="label">Training Samples</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">0.023ms</div>
+                        <div class="label">Latency</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:5001';
+        
+        // Load examples on page load
+        window.addEventListener('DOMContentLoaded', loadExamples);
+        
+        async function loadExamples() {
+            try {
+                const response = await fetch(`${API_URL}/examples`);
+                const examples = await response.json();
+                
+                const container = document.getElementById('examples-container');
+                container.innerHTML = examples.map(ex => `
+                    <div class="example-card" onclick='loadExample(${JSON.stringify(ex)})'>
+                        <h4>${ex.name}</h4>
+                        <p><strong>FEN:</strong> ${ex.fen.substring(0, 50)}...</p>
+                        <p><strong>Moves:</strong> ${ex.moves || '(none - position only)'}</p>
+                        <p><strong>Expected:</strong> ${ex.expected}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading examples:', error);
+            }
+        }
+        
+        function loadExample(example) {
+            document.getElementById('fen').value = example.fen;
+            document.getElementById('moves').value = example.moves;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        async function classifyPuzzle() {
+            const fen = document.getElementById('fen').value.trim();
+            const moves = document.getElementById('moves').value.trim();
+            
+            console.log('Classifying puzzle:', { fen, moves });
+            
+            if (!fen) {
+                alert('Please enter a FEN position');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('result').classList.remove('show');
+            
+            try {
+                const response = await fetch(`${API_URL}/classify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache',
+                    },
+                    cache: 'no-store',
+                    body: JSON.stringify({ fen, moves })
+                });
+                
+                const data = await response.json();
+                console.log('Server response:', data);
+                
+                if (response.ok) {
+                    displayResult(data);
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Failed to connect to server. Make sure demo_server.py is running.');
+                console.error('Error:', error);
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        }
+        
+        function displayResult(data) {
+            const resultDiv = document.getElementById('result');
+            const difficultyMap = {
+                'Very Easy': 'very-easy',
+                'Easy': 'easy',
+                'Medium': 'medium',
+                'Hard': 'hard',
+                'Extreme': 'extreme'
+            };
+            
+            // Set difficulty and rating
+            document.getElementById('result-difficulty').textContent = `Difficulty: ${data.difficulty}`;
+            document.getElementById('result-rating').textContent = `${data.rating} Rating`;
+            
+            // Set info
+            const accuracy = data.has_solution ? '±285' : '±450';
+            document.getElementById('result-info').textContent = 
+                `Predicted rating with ${accuracy} point accuracy. ` +
+                (data.has_solution ? 'Solution provided ✓' : 'Position only (less accurate)');
+            
+            // Show warning if no solution
+            const warningDiv = document.getElementById('result-warning');
+            if (data.warning) {
+                document.getElementById('warning-text').textContent = data.warning;
+                warningDiv.style.display = 'block';
+            } else {
+                warningDiv.style.display = 'none';
+            }
+            
+            // Set color scheme based on difficulty
+            resultDiv.className = `result result-${difficultyMap[data.difficulty]} show`;
+        }
+        
+        function clearForm() {
+            document.getElementById('fen').value = '';
+            document.getElementById('moves').value = '';
+            document.getElementById('result').classList.remove('show');
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('moves').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                classifyPuzzle();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.python-version
+*.egg-info/
+dist/
+build/
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+
+# Notebook artifacts
+.ipynb_checkpoints/
+
+# Packaging / dependency managers
+pip-wheel-metadata/
+poetry.lock
+Pipfile.lock
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model files (too large for GitHub)
+*.pkl
+*.joblib
+*.sav
+models/*
+
+# Data files
+*.zst
+*.csv
+*.jsonl
+*.parquet
+*.feather
+*.sqlite3
+
+# Logs
+*.log
+logs/
+*.out
+*.err
+
+# Test files
+test_*.py
+beginner_puzzles.csv
+advanced_puzzles.csv
+custom_range_puzzles.csv
