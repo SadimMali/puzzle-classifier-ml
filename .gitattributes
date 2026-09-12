@@ -1,1 +1,2 @@
+models/puzzle_classifier_model.pkl filter=lfs diff=lfs merge=lfs -text
 *.pkl filter=lfs diff=lfs merge=lfs -text
